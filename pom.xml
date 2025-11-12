@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xmlns="http://maven.apache.org/POM/4.0.0"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<!-- Maven 项目模型版本 -->
+	<modelVersion>4.0.0</modelVersion>
+
+	<!-- 项目坐标：组织标识、项目标识、版本 -->
+	<groupId>com.alibaba.cloud.ai</groupId>
+	<artifactId>spring-ai-spring-boot</artifactId>
+	<version>${revision}</version>
+
+	<!-- 打包类型：pom 表示这是一个多模块项目的父POM -->
+	<packaging>pom</packaging>
+
+	<!-- 项目描述信息 -->
+	<description>Spring AI Alibaba Spring Boot</description>
+	<name>Spring AI Alibaba Spring Boot</name>
+	<url>https://github.com/rosabb/TicketAgent</url>
+
+	<!-- 项目属性定义，用于统一管理版本号和配置 -->
+	<properties>
+		<!-- 项目版本号，使用revision变量便于统一管理 -->
+		<revision>1.0.0</revision>
+
+		<!-- 项目编码设置 -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<!-- Java版本配置 -->
+		<java.version>17</java.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<!-- 注意：这里重复定义了maven.compiler.source，应该是maven.compiler.target -->
+		<maven.compiler.source>17</maven.compiler.source>
+
+		<!-- 各依赖组件的版本号 -->
+		<!-- Spring AI 版本 -->
+		<spring-ai.version>1.0.0-M6</spring-ai.version>
+
+		<!-- Spring AI Alibaba 版本 -->
+		<spring-ai-alibaba.version>1.0.0-M6.1</spring-ai-alibaba.version>
+
+		<!-- Spring Boot 版本 -->
+		<spring-boot.version>3.4.0</spring-boot.version>
+
+		<!-- Maven 插件版本 -->
+		<maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
+		<flatten-maven-plugin.version>1.3.0</flatten-maven-plugin.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+	</properties>
+
+	<!-- 依赖管理：统一管理所有子模块的依赖版本 -->
+	<dependencyManagement>
+		<dependencies>
+			<!-- 导入Spring Boot的BOM，统一管理Spring Boot相关依赖版本 -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>${spring-boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- 导入Spring AI的BOM，统一管理Spring AI相关依赖版本 -->
+			<dependency>
+				<groupId>org.springframework.ai</groupId>
+				<artifactId>spring-ai-bom</artifactId>
+				<version>${spring-ai.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- Spring AI Alibaba Starter 依赖 -->
+			<dependency>
+				<groupId>com.alibaba.cloud.ai</groupId>
+				<artifactId>spring-ai-alibaba-starter</artifactId>
+				<version>${spring-ai-alibaba.version}</version>
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
+
+	<!-- 构建配置 -->
+	<build>
+		<plugins>
+			<!-- Spring Boot Maven插件，用于打包和运行Spring Boot应用 -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>${spring-boot.version}</version>
+			</plugin>
+
+			<!-- Maven部署插件，配置为跳过部署（用于本地开发） -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>${maven-deploy-plugin.version}</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+
+			<!-- Maven编译插件，配置Java编译参数 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
+				<configuration>
+					<!-- 使用release参数替代source/target，确保与JDK版本兼容 -->
+					<release>${java.version}</release>
+					<compilerArgs>
+						<!-- 保留参数名称信息，便于反射获取 -->
+						<compilerArg>-parameters</compilerArg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
+
+			<!-- Flatten Maven插件，用于简化POM文件，便于发布 -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>flatten-maven-plugin</artifactId>
+				<version>${flatten-maven-plugin.version}</version>
+				<inherited>true</inherited>  <!-- 继承到所有子模块 -->
+				<executions>
+					<!-- 执行flatten目标，处理资源时运行 -->
+					<execution>
+						<id>flatten</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>flatten</goal>
+						</goals>
+						<configuration>
+							<updatePomFile>true</updatePomFile>
+							<flattenMode>ossrh</flattenMode>  <!-- OSSRH发布模式 -->
+							<pomElements>
+								<!-- 配置POM元素处理方式 -->
+								<distributionManagement>remove</distributionManagement>
+								<dependencyManagement>remove</dependencyManagement>
+								<repositories>remove</repositories>
+								<scm>keep</scm>        <!-- 保留SCM信息 -->
+								<url>keep</url>        <!-- 保留项目URL -->
+								<organization>resolve</organization>  <!-- 解析组织信息 -->
+							</pomElements>
+						</configuration>
+					</execution>
+					<!-- 清理flatten生成的文件 -->
+					<execution>
+						<id>flatten.clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<!-- 仓库配置：定义依赖下载地址 -->
+	<repositories>
+		<!-- Spring里程碑仓库 -->
+		<repository>
+			<id>spring-milestones</id>
+			<name>Spring Milestones</name>
+			<url>https://repo.spring.io/milestone</url>
+			<snapshots>
+				<enabled>false</enabled>  <!-- 禁用快照版本 -->
+			</snapshots>
+		</repository>
+		<!-- Spring快照仓库 -->
+		<repository>
+			<id>spring-snapshots</id>
+			<name>Spring Snapshots</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<releases>
+				<enabled>false</enabled>  <!-- 禁用正式版本 -->
+			</releases>
+		</repository>
+		<!-- 阿里云Maven仓库，国内访问较快 -->
+		<repository>
+			<id>aliyunmaven</id>
+			<name>aliyun</name>
+			<url>https://maven.aliyun.com/repository/public</url>
+		</repository>
+	</repositories>
+
+	<!-- 插件仓库配置 -->
+	<pluginRepositories>
+		<pluginRepository>
+			<id>public</id>
+			<name>aliyun nexus</name>
+			<url>https://maven.aliyun.com/repository/public</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>  <!-- 禁用插件快照版本 -->
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+</project>
