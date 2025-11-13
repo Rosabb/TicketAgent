@@ -9,10 +9,6 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8">
-      <module name="chat-demo" target="17" />
-      <module name="image-demo" target="17" />
-      <module name="multi-model-demo" target="17" />
-      <module name="prompt-demo" target="17" />
       <module name="spring-ai-ticket-agent" target="17" />
     </bytecodeTargetLevel>
   </component>
